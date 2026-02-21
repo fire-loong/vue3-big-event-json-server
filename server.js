@@ -597,102 +597,72 @@ server.delete('/my/article/info', (req, res) => {
 })
 
 // ==================== 启动服务 ====================
-// 添加静态文件服务配置（使用Node.js内置模块）
-const serveStatic = (req, res, next) => {
-  console.log(`[静态文件服务] 请求路径: ${req.url}`);
+// 简化静态文件服务配置
+server.use((req, res, next) => {
+  console.log(`[请求处理] ${req.method} ${req.url}`);
   
-  // 检查dist目录是否存在
+  // 处理API请求
+  if (req.url.startsWith('/api/')) {
+    console.log(`[请求处理] API请求，交给json-server处理`);
+    return next();
+  }
+  
+  // 处理静态文件请求
   const distDir = path.join(__dirname, 'dist');
-  fs.access(distDir, fs.constants.F_OK, (err) => {
+  let filePath;
+  
+  // 处理根路径
+  if (req.url === '/') {
+    filePath = path.join(distDir, 'index.html');
+  } 
+  // 处理favicon.ico
+  else if (req.url === '/favicon.ico') {
+    filePath = path.join(distDir, 'favicon.ico');
+  } 
+  // 处理其他静态文件
+  else {
+    filePath = path.join(distDir, req.url);
+  }
+  
+  console.log(`[请求处理] 尝试读取文件: ${filePath}`);
+  
+  // 读取文件
+  fs.readFile(filePath, (err, data) => {
     if (err) {
-      console.error(`[静态文件服务] 错误: dist目录不存在`);
-      return res.status(500).send('Internal Server Error: dist directory not found');
-    }
-    
-    // 处理根路径
-    let filePath;
-    if (req.url === '/') {
-      filePath = path.join(distDir, 'index.html');
-      console.log(`[静态文件服务] 根路径请求，返回: ${filePath}`);
+      console.log(`[请求处理] 文件不存在或读取失败，返回index.html`);
+      // 对于任何文件不存在的情况，都返回index.html（支持SPA路由）
+      const indexPath = path.join(distDir, 'index.html');
+      fs.readFile(indexPath, (err, indexData) => {
+        if (err) {
+          console.error(`[请求处理] 错误: index.html不存在`);
+          return res.status(500).send('Internal Server Error');
+        }
+        res.setHeader('Content-Type', 'text/html');
+        res.send(indexData);
+      });
     } else {
-      // 对于带有特殊字符的路径，直接尝试拼接
-      filePath = path.join(distDir, req.url);
-      console.log(`[静态文件服务] 尝试访问: ${filePath}`);
-    }
-    
-    // 检查文件是否存在
-    fs.access(filePath, fs.constants.F_OK, (err) => {
-      if (err) {
-        console.log(`[静态文件服务] 文件不存在: ${filePath}`);
-        
-        // 对于所有请求，都返回index.html（支持SPA路由）
-        const indexPath = path.join(distDir, 'index.html');
-        fs.access(indexPath, fs.constants.F_OK, (err) => {
-          if (err) {
-            console.error(`[静态文件服务] 错误: index.html不存在`);
-            return res.status(404).send('Not Found: index.html not found');
-          }
-          console.log(`[静态文件服务] 返回index.html: ${indexPath}`);
-          fs.readFile(indexPath, (err, data) => {
-            if (err) {
-              console.error(`[静态文件服务] 错误: 读取index.html失败: ${err.message}`);
-              return res.status(500).send('Internal Server Error: failed to read index.html');
-            }
-            res.setHeader('Content-Type', 'text/html');
-            res.send(data);
-          });
-        });
-      } else {
-        // 文件存在，读取并返回
-        console.log(`[静态文件服务] 文件存在，返回: ${filePath}`);
-        fs.readFile(filePath, (err, data) => {
-          if (err) {
-            console.error(`[静态文件服务] 错误: 读取文件失败: ${err.message}`);
-            return res.status(500).send('Internal Server Error: failed to read file');
-          }
-          // 设置Content-Type
-          const ext = path.extname(filePath);
-          let contentType = 'text/plain';
-          switch (ext) {
-            case '.html': contentType = 'text/html'; break;
-            case '.css': contentType = 'text/css'; break;
-            case '.js': contentType = 'application/javascript'; break;
-            case '.json': contentType = 'application/json'; break;
-            case '.png': contentType = 'image/png'; break;
-            case '.jpg': case '.jpeg': contentType = 'image/jpeg'; break;
-            case '.gif': contentType = 'image/gif'; break;
-            case '.ico': contentType = 'image/x-icon'; break;
-          }
-          console.log(`[静态文件服务] 返回文件，Content-Type: ${contentType}`);
-          res.setHeader('Content-Type', contentType);
-          res.send(data);
-        });
+      // 设置Content-Type
+      const ext = path.extname(filePath);
+      let contentType = 'text/plain';
+      switch (ext) {
+        case '.html': contentType = 'text/html'; break;
+        case '.css': contentType = 'text/css'; break;
+        case '.js': contentType = 'application/javascript'; break;
+        case '.json': contentType = 'application/json'; break;
+        case '.png': contentType = 'image/png'; break;
+        case '.jpg': case '.jpeg': contentType = 'image/jpeg'; break;
+        case '.gif': contentType = 'image/gif'; break;
+        case '.ico': contentType = 'image/x-icon'; break;
       }
-    });
-  });
-};
-
-// 使用改进后的静态文件服务
-server.use(serveStatic);
-
-// 确保所有请求都能得到响应
-server.use((req, res) => {
-  const indexPath = path.join(__dirname, 'dist', 'index.html');
-  fs.access(indexPath, fs.constants.F_OK, (err) => {
-    if (err) {
-      return res.status(404).send('Not Found');
-    }
-    fs.readFile(indexPath, (err, data) => {
-      if (err) {
-        return res.status(500).send('Internal Server Error');
-      }
-      res.setHeader('Content-Type', 'text/html');
+      console.log(`[请求处理] 返回文件，Content-Type: ${contentType}`);
+      res.setHeader('Content-Type', contentType);
       res.send(data);
-    });
+    }
   });
 });
 
-server.use(router); // 保留 json-server 原生路由（可选）
+// 确保API路由在静态文件服务之后
+server.use('/api', router); // 确保API路由正确处理
 
 // 🔥 关键修改：使用环境变量端口，兼容 Railway 自动分配的端口
 const PORT = process.env.PORT || 3002;
