@@ -1,0 +1,165 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "123456",
+      "nickname": "测试管理员",
+      "user_pic": "",
+      "email": ""
+    }
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "cate_name": "科技",
+      "cate_alias": "tech",
+      "is_delete": 0
+    },
+    {
+      "id": 2,
+      "cate_name": "生活",
+      "cate_alias": "life",
+      "is_delete": 0
+    },
+    {
+      "id": 3,
+      "cate_name": "娱乐",
+      "cate_alias": "ent",
+      "is_delete": 0
+    }
+  ],
+  "articles": [
+    {
+      "id": 1,
+      "title": "测试文章1",
+      "cate_id": 1,
+      "content": "这是本地测试文章内容1",
+      "state": "已发布",
+      "author_id": 1,
+      "create_time": "2026-02-21",
+      "update_time": "2026-02-21"
+    },
+    {
+      "id": 2,
+      "title": "测试文章2",
+      "cate_id": 1,
+      "content": "这是本地测试文章内容2",
+      "state": "已发布",
+      "author_id": 1,
+      "create_time": "2026-02-20",
+      "update_time": "2026-02-20"
+    },
+    {
+      "id": 3,
+      "title": "测试文章3",
+      "cate_id": 1,
+      "content": "这是本地测试文章内容3",
+      "state": "草稿",
+      "author_id": 1,
+      "create_time": "2026-02-19",
+      "update_time": "2026-02-19"
+    },
+    {
+      "id": 4,
+      "title": "测试文章4",
+      "cate_id": 2,
+      "content": "这是本地测试文章内容4",
+      "state": "已发布",
+      "author_id": 1,
+      "create_time": "2026-02-18",
+      "update_time": "2026-02-18"
+    },
+    {
+      "id": 5,
+      "title": "测试文章5",
+      "cate_id": 2,
+      "content": "这是本地测试文章内容5",
+      "state": "已发布",
+      "author_id": 1,
+      "create_time": "2026-02-17",
+      "update_time": "2026-02-17"
+    },
+    {
+      "id": 6,
+      "title": "测试文章6",
+      "cate_id": 2,
+      "content": "这是本地测试文章内容6",
+      "state": "草稿",
+      "author_id": 1,
+      "create_time": "2026-02-16",
+      "update_time": "2026-02-16"
+    },
+    {
+      "id": 7,
+      "title": "测试文章7",
+      "cate_id": 3,
+      "content": "这是本地测试文章内容7",
+      "state": "已发布",
+      "author_id": 1,
+      "create_time": "2026-02-15",
+      "update_time": "2026-02-15"
+    },
+    {
+      "id": 8,
+      "title": "测试文章8",
+      "cate_id": 3,
+      "content": "这是本地测试文章内容8",
+      "state": "已发布",
+      "author_id": 1,
+      "create_time": "2026-02-14",
+      "update_time": "2026-02-14"
+    },
+    {
+      "id": 9,
+      "title": "测试文章9",
+      "cate_id": 3,
+      "content": "这是本地测试文章内容9",
+      "state": "草稿",
+      "author_id": 1,
+      "create_time": "2026-02-13",
+      "update_time": "2026-02-13"
+    },
+    {
+      "id": 10,
+      "title": "测试文章10",
+      "cate_id": 1,
+      "content": "这是本地测试文章内容10",
+      "state": "已发布",
+      "author_id": 1,
+      "create_time": "2026-02-12",
+      "update_time": "2026-02-12"
+    },
+    {
+      "id": 11,
+      "title": "测试文章11",
+      "cate_id": 2,
+      "content": "这是本地测试文章内容11",
+      "state": "已发布",
+      "author_id": 1,
+      "create_time": "2026-02-11",
+      "update_time": "2026-02-11"
+    },
+    {
+      "id": 12,
+      "title": "测试文章12",
+      "cate_id": 3,
+      "content": "这是本地测试文章内容12",
+      "state": "草稿",
+      "author_id": 1,
+      "create_time": "2026-02-10",
+      "update_time": "2026-02-10"
+    },
+    {
+      "id": 13,
+      "title": "这是一次伟大的实践",
+      "cate_id": 1,
+      "content": "<p>2026/2/21 第一次将基于Vue3&amp;json-server项目部署到railway</p>",
+      "state": "已发布",
+      "author_id": "1",
+      "create_time": "2026/2/21",
+      "update_time": "2026/2/21",
+      "cover_img": "blob:https://vue3-big-event-json-server-production-c522.up.railway.app/4c4ca616-0e41-4432-8c45-4b7523d85b6d"
+    }
+  ]
+}

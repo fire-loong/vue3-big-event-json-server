@@ -4,8 +4,8 @@ import router from '@/router'
 // 注意：补充导入 ElMessage（你的代码里用了但没导入，会报错）
 import { ElMessage } from 'element-plus'
 
-// 核心修改：把黑马地址换成本地 json-server 地址
-const baseURL = 'http://localhost:3002'
+// 使用相对路径，适用于本地和部署环境
+const baseURL = ''
 
 const instance = axios.create({
   baseURL,

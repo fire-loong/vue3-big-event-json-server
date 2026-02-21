@@ -194,7 +194,7 @@ const onPublish = async (state) => {
               form.cover_img ||
               (articleDetail.cover_img.startsWith('http')
                 ? articleDetail.cover_img
-                : 'http://localhost:3002' + articleDetail.cover_img)
+                : '' + articleDetail.cover_img)
             "
             class="avatar"
           />
