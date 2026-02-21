@@ -575,8 +575,8 @@ server.delete('/my/article/info', (req, res) => {
 })
 
 // ==================== 启动服务 ====================
-// 添加静态文件服务配置
-server.use(require('express').static(path.join(__dirname, 'dist')))
+// 添加静态文件服务配置（使用json-server的内置功能）
+server.use(jsonServer.static(path.join(__dirname, 'dist')))
 
 // 处理SPA路由，所有未匹配的请求都返回index.html
 server.get('*', (req, res) => {
