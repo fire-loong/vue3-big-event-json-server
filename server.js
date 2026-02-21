@@ -575,10 +575,21 @@ server.delete('/my/article/info', (req, res) => {
 })
 
 // ==================== 启动服务 ====================
-server.use(router) // 保留 json-server 原生路由（可选）
-server.listen(3002, '0.0.0.0', () => {
-  console.log(
-    '✅ 本地接口服务（含用户/分类/文章）启动成功：http://localhost:3002'
-  )
-  console.log('📌 测试账号：admin / 123456')
+// 添加静态文件服务配置
+server.use(require('express').static(path.join(__dirname, 'dist')))
+
+// 处理SPA路由，所有未匹配的请求都返回index.html
+server.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'))
 })
+
+server.use(router) // 保留 json-server 原生路由（可选）
+
+// 🔥 关键修改：使用环境变量端口，兼容 Railway 自动分配的端口
+const PORT = process.env.PORT || 3002;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(
+    `✅ 本地接口服务（含用户/分类/文章）启动成功：http://0.0.0.0:${PORT}`
+  );
+  console.log('📌 测试账号：admin / 123456');
+});
