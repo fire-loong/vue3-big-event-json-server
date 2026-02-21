@@ -30,6 +30,19 @@ const saveData = (data) => {
   }
 }
 
+// 添加CORS中间件
+server.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
 server.use(middlewares)
 server.use(jsonServer.bodyParser) // 解析 POST/PUT/PATCH 请求体
 
@@ -577,69 +590,79 @@ server.delete('/my/article/info', (req, res) => {
 // ==================== 启动服务 ====================
 // 添加静态文件服务配置（使用Node.js内置模块）
 const serveStatic = (req, res, next) => {
-  const filePath = path.join(__dirname, 'dist', req.url);
+  // 处理根路径
+  let filePath;
+  if (req.url === '/') {
+    filePath = path.join(__dirname, 'dist', 'index.html');
+  } else {
+    filePath = path.join(__dirname, 'dist', req.url);
+  }
   
   // 检查文件是否存在
   fs.access(filePath, fs.constants.F_OK, (err) => {
     if (err) {
-      // 文件不存在，继续处理其他路由
-      next();
+      // 如果是根路径或HTML文件，返回index.html
+      if (req.url === '/' || req.url.endsWith('.html')) {
+        const indexPath = path.join(__dirname, 'dist', 'index.html');
+        fs.access(indexPath, fs.constants.F_OK, (err) => {
+          if (err) {
+            return res.status(404).send('Not Found');
+          }
+          fs.readFile(indexPath, (err, data) => {
+            if (err) {
+              return res.status(500).send('Internal Server Error');
+            }
+            res.setHeader('Content-Type', 'text/html');
+            res.send(data);
+          });
+        });
+      } else {
+        // 其他文件不存在，继续处理
+        next();
+      }
     } else {
-      // 文件存在，读取并返回文件
+      // 文件存在，读取并返回
       fs.readFile(filePath, (err, data) => {
         if (err) {
-          res.status(500).send('Internal Server Error');
-        } else {
-          // 根据文件扩展名设置Content-Type
-          const ext = path.extname(filePath);
-          let contentType = 'text/plain';
-          
-          switch (ext) {
-            case '.html':
-              contentType = 'text/html';
-              break;
-            case '.css':
-              contentType = 'text/css';
-              break;
-            case '.js':
-              contentType = 'application/javascript';
-              break;
-            case '.json':
-              contentType = 'application/json';
-              break;
-            case '.png':
-              contentType = 'image/png';
-              break;
-            case '.jpg':
-            case '.jpeg':
-              contentType = 'image/jpeg';
-              break;
-            case '.gif':
-              contentType = 'image/gif';
-              break;
-          }
-          
-          res.setHeader('Content-Type', contentType);
-          res.send(data);
+          return res.status(500).send('Internal Server Error');
         }
+        // 设置Content-Type
+        const ext = path.extname(filePath);
+        let contentType = 'text/plain';
+        switch (ext) {
+          case '.html': contentType = 'text/html'; break;
+          case '.css': contentType = 'text/css'; break;
+          case '.js': contentType = 'application/javascript'; break;
+          case '.json': contentType = 'application/json'; break;
+          case '.png': contentType = 'image/png'; break;
+          case '.jpg': case '.jpeg': contentType = 'image/jpeg'; break;
+          case '.gif': contentType = 'image/gif'; break;
+          case '.ico': contentType = 'image/x-icon'; break;
+        }
+        res.setHeader('Content-Type', contentType);
+        res.send(data);
       });
     }
   });
 };
 
-// 使用静态文件服务中间件
+// 使用改进后的静态文件服务
 server.use(serveStatic);
 
-// 处理SPA路由，所有未匹配的请求都返回index.html
-server.get('*', (req, res) => {
+// 确保所有请求都能得到响应
+server.use((req, res) => {
   const indexPath = path.join(__dirname, 'dist', 'index.html');
-  fs.readFile(indexPath, (err, data) => {
+  fs.access(indexPath, fs.constants.F_OK, (err) => {
     if (err) {
-      res.status(500).send('Internal Server Error');
-    } else {
+      return res.status(404).send('Not Found');
+    }
+    fs.readFile(indexPath, (err, data) => {
+      if (err) {
+        return res.status(500).send('Internal Server Error');
+      }
       res.setHeader('Content-Type', 'text/html');
       res.send(data);
-    }
+    });
   });
 });
 
