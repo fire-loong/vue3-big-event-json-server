@@ -575,15 +575,75 @@ server.delete('/my/article/info', (req, res) => {
 })
 
 // ==================== 启动服务 ====================
-// 添加静态文件服务配置（使用json-server的内置功能）
-server.use(jsonServer.static(path.join(__dirname, 'dist')))
+// 添加静态文件服务配置（使用Node.js内置模块）
+const serveStatic = (req, res, next) => {
+  const filePath = path.join(__dirname, 'dist', req.url);
+  
+  // 检查文件是否存在
+  fs.access(filePath, fs.constants.F_OK, (err) => {
+    if (err) {
+      // 文件不存在，继续处理其他路由
+      next();
+    } else {
+      // 文件存在，读取并返回文件
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          res.status(500).send('Internal Server Error');
+        } else {
+          // 根据文件扩展名设置Content-Type
+          const ext = path.extname(filePath);
+          let contentType = 'text/plain';
+          
+          switch (ext) {
+            case '.html':
+              contentType = 'text/html';
+              break;
+            case '.css':
+              contentType = 'text/css';
+              break;
+            case '.js':
+              contentType = 'application/javascript';
+              break;
+            case '.json':
+              contentType = 'application/json';
+              break;
+            case '.png':
+              contentType = 'image/png';
+              break;
+            case '.jpg':
+            case '.jpeg':
+              contentType = 'image/jpeg';
+              break;
+            case '.gif':
+              contentType = 'image/gif';
+              break;
+          }
+          
+          res.setHeader('Content-Type', contentType);
+          res.send(data);
+        }
+      });
+    }
+  });
+};
+
+// 使用静态文件服务中间件
+server.use(serveStatic);
 
 // 处理SPA路由，所有未匹配的请求都返回index.html
 server.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'))
-})
+  const indexPath = path.join(__dirname, 'dist', 'index.html');
+  fs.readFile(indexPath, (err, data) => {
+    if (err) {
+      res.status(500).send('Internal Server Error');
+    } else {
+      res.setHeader('Content-Type', 'text/html');
+      res.send(data);
+    }
+  });
+});
 
-server.use(router) // 保留 json-server 原生路由（可选）
+server.use(router); // 保留 json-server 原生路由（可选）
 
 // 🔥 关键修改：使用环境变量端口，兼容 Railway 自动分配的端口
 const PORT = process.env.PORT || 3002;
