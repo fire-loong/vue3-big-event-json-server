@@ -30,6 +30,15 @@ const saveData = (data) => {
   }
 }
 
+// 添加日志中间件
+const logRequest = (req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+};
+
+// 使用日志中间件
+server.use(logRequest);
+
 // 添加CORS中间件
 server.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -590,59 +599,76 @@ server.delete('/my/article/info', (req, res) => {
 // ==================== 启动服务 ====================
 // 添加静态文件服务配置（使用Node.js内置模块）
 const serveStatic = (req, res, next) => {
-  // 处理根路径
-  let filePath;
-  if (req.url === '/') {
-    filePath = path.join(__dirname, 'dist', 'index.html');
-  } else {
-    filePath = path.join(__dirname, 'dist', req.url);
-  }
+  console.log(`[静态文件服务] 请求路径: ${req.url}`);
   
-  // 检查文件是否存在
-  fs.access(filePath, fs.constants.F_OK, (err) => {
+  // 检查dist目录是否存在
+  const distDir = path.join(__dirname, 'dist');
+  fs.access(distDir, fs.constants.F_OK, (err) => {
     if (err) {
-      // 如果是根路径或HTML文件，返回index.html
-      if (req.url === '/' || req.url.endsWith('.html')) {
-        const indexPath = path.join(__dirname, 'dist', 'index.html');
+      console.error(`[静态文件服务] 错误: dist目录不存在`);
+      return res.status(500).send('Internal Server Error: dist directory not found');
+    }
+    
+    // 处理根路径
+    let filePath;
+    if (req.url === '/') {
+      filePath = path.join(distDir, 'index.html');
+      console.log(`[静态文件服务] 根路径请求，返回: ${filePath}`);
+    } else {
+      // 对于带有特殊字符的路径，直接尝试拼接
+      filePath = path.join(distDir, req.url);
+      console.log(`[静态文件服务] 尝试访问: ${filePath}`);
+    }
+    
+    // 检查文件是否存在
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+      if (err) {
+        console.log(`[静态文件服务] 文件不存在: ${filePath}`);
+        
+        // 对于所有请求，都返回index.html（支持SPA路由）
+        const indexPath = path.join(distDir, 'index.html');
         fs.access(indexPath, fs.constants.F_OK, (err) => {
           if (err) {
-            return res.status(404).send('Not Found');
+            console.error(`[静态文件服务] 错误: index.html不存在`);
+            return res.status(404).send('Not Found: index.html not found');
           }
+          console.log(`[静态文件服务] 返回index.html: ${indexPath}`);
           fs.readFile(indexPath, (err, data) => {
             if (err) {
-              return res.status(500).send('Internal Server Error');
+              console.error(`[静态文件服务] 错误: 读取index.html失败: ${err.message}`);
+              return res.status(500).send('Internal Server Error: failed to read index.html');
             }
             res.setHeader('Content-Type', 'text/html');
             res.send(data);
           });
         });
       } else {
-        // 其他文件不存在，继续处理
-        next();
+        // 文件存在，读取并返回
+        console.log(`[静态文件服务] 文件存在，返回: ${filePath}`);
+        fs.readFile(filePath, (err, data) => {
+          if (err) {
+            console.error(`[静态文件服务] 错误: 读取文件失败: ${err.message}`);
+            return res.status(500).send('Internal Server Error: failed to read file');
+          }
+          // 设置Content-Type
+          const ext = path.extname(filePath);
+          let contentType = 'text/plain';
+          switch (ext) {
+            case '.html': contentType = 'text/html'; break;
+            case '.css': contentType = 'text/css'; break;
+            case '.js': contentType = 'application/javascript'; break;
+            case '.json': contentType = 'application/json'; break;
+            case '.png': contentType = 'image/png'; break;
+            case '.jpg': case '.jpeg': contentType = 'image/jpeg'; break;
+            case '.gif': contentType = 'image/gif'; break;
+            case '.ico': contentType = 'image/x-icon'; break;
+          }
+          console.log(`[静态文件服务] 返回文件，Content-Type: ${contentType}`);
+          res.setHeader('Content-Type', contentType);
+          res.send(data);
+        });
       }
-    } else {
-      // 文件存在，读取并返回
-      fs.readFile(filePath, (err, data) => {
-        if (err) {
-          return res.status(500).send('Internal Server Error');
-        }
-        // 设置Content-Type
-        const ext = path.extname(filePath);
-        let contentType = 'text/plain';
-        switch (ext) {
-          case '.html': contentType = 'text/html'; break;
-          case '.css': contentType = 'text/css'; break;
-          case '.js': contentType = 'application/javascript'; break;
-          case '.json': contentType = 'application/json'; break;
-          case '.png': contentType = 'image/png'; break;
-          case '.jpg': case '.jpeg': contentType = 'image/jpeg'; break;
-          case '.gif': contentType = 'image/gif'; break;
-          case '.ico': contentType = 'image/x-icon'; break;
-        }
-        res.setHeader('Content-Type', contentType);
-        res.send(data);
-      });
-    }
+    });
   });
 };
 
